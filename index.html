@@ -26,6 +26,9 @@
         input, select { width: 100%; padding: 10px; background-color: #1e1e1e; border: 1px solid #7f8c8d; color: #fff; border-radius: 5px; font-size: 16px; outline: none; }
         input:focus, select:focus { border-color: #2ecc71; }
         
+        /* Gaya khusus untuk input yang terkunci (readonly) */
+        .locked-input { background-color: #333; color: #2ecc71; font-weight: bold; cursor: not-allowed; }
+
         .btn-submit { background-color: #2ecc71; color: #1e1e1e; padding: 12px 20px; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
         .btn-submit:hover { background-color: #27ae60; }
 
@@ -64,25 +67,34 @@
                     <label>Warna Sepatu</label>
                     <input type="text" placeholder="Contoh: Putih">
                 </div>
+                
+                <!-- DROPDOWN LAYANAN BARU -->
                 <div class="form-group">
                     <label>Layanan (Treatment)</label>
-                    <input type="text" placeholder="Contoh: Deep Clean" required>
+                    <select id="pilih-layanan" required>
+                        <option value="" disabled selected>-- Pilih Layanan --</option>
+                        <option value="30000">Standar Cleaning (Rp 30.000)</option>
+                        <option value="40000">Deep Clean Standar (Rp 40.000)</option>
+                        <option value="50000">Deep Clean Premium (Rp 50.000)</option>
+                    </select>
                 </div>
+                
+                <!-- HARGA DASAR OTOMATIS TERKUNCI -->
                 <div class="form-group">
                     <label>Harga Dasar (Rp)</label>
-                    <input type="number" id="harga-dasar" placeholder="0" required>
+                    <input type="number" id="harga-dasar" class="locked-input" placeholder="0" readonly>
                 </div>
+
                 <div class="form-group">
                     <label>Pilih Promo</label>
                     <select id="pilih-promo">
                         <option value="0">Tidak ada promo</option>
                         <option value="20000">OPENING20 - Potongan Rp 20.000</option>
-                        <!-- Pilihan promo ini nantinya akan otomatis terisi dari Google Sheets -->
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Total Tagihan (Rp)</label>
-                    <input type="text" id="total-tagihan" readonly style="background-color: #333; font-weight: bold; color: #2ecc71;">
+                    <input type="number" id="total-tagihan" class="locked-input" placeholder="0" readonly>
                 </div>
                 <div class="form-group">
                     <label>Status Pembayaran</label>
@@ -120,7 +132,6 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Ini contoh tampilan data, nanti akan diisi otomatis dari Google Sheets -->
                     <tr>
                         <td>OPENING20</td>
                         <td>Rp 20.000</td>
@@ -134,24 +145,21 @@
 
     <!-- Script JavaScript Internal -->
     <script>
-        // Fungsi untuk berpindah tab menu
         function openTab(tabName) {
-            // Sembunyikan semua tab konten
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            // Hilangkan warna hijau di semua tombol menu
-            document.querySelectorAll('.menu-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-
-            // Tampilkan tab yang diklik dan beri warna hijau pada tombolnya
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(tabName).classList.add('active');
             event.currentTarget.classList.add('active');
         }
 
-        // Fungsi simulasi perhitungan Harga dikurangi Promo
-        document.getElementById('harga-dasar').addEventListener('input', hitungTotal);
+        // Script untuk otomatisasi harga dari dropdown
+        document.getElementById('pilih-layanan').addEventListener('change', function() {
+            // Memasukkan angka (value) dari dropdown ke kolom harga dasar
+            document.getElementById('harga-dasar').value = this.value;
+            // Langsung hitung ulang total tagihan tiap kali layanan diubah
+            hitungTotal();
+        });
+
         document.getElementById('pilih-promo').addEventListener('change', hitungTotal);
 
         function hitungTotal() {
@@ -159,7 +167,7 @@
             const potonganPromo = parseFloat(document.getElementById('pilih-promo').value) || 0;
             
             let total = hargaDasar - potonganPromo;
-            if(total < 0) total = 0; // Mencegah total menjadi minus
+            if(total < 0) total = 0; 
 
             document.getElementById('total-tagihan').value = total;
         }
