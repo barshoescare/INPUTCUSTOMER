@@ -8,31 +8,26 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { background-color: #1e1e1e; color: #ffffff; display: flex; min-height: 100vh; }
         
-        /* Sidebar */
         .sidebar { width: 250px; background-color: #2b2d2f; padding: 20px; border-right: 2px solid #2ecc71; }
         .sidebar h2 { color: #2ecc71; margin-bottom: 30px; font-size: 22px; }
         .menu-btn { display: block; width: 100%; padding: 15px; margin-bottom: 10px; background: transparent; color: #fff; border: 1px solid #7f8c8d; border-radius: 5px; cursor: pointer; text-align: left; font-size: 16px; }
         .menu-btn.active, .menu-btn:hover { background-color: #2ecc71; color: #1e1e1e; border-color: #2ecc71; font-weight: bold; }
 
-        /* Main Content */
         .main-content { flex: 1; padding: 40px; }
         .tab-content { display: none; background-color: #2b2d2f; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         .tab-content.active { display: block; }
         h3 { color: #2ecc71; margin-bottom: 20px; font-size: 24px; border-bottom: 1px solid #7f8c8d; padding-bottom: 10px; }
 
-        /* Form Elements */
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; color: #bdc3c7; }
         input, select { width: 100%; padding: 10px; background-color: #1e1e1e; border: 1px solid #7f8c8d; color: #fff; border-radius: 5px; font-size: 16px; outline: none; }
         input:focus, select:focus { border-color: #2ecc71; }
         
-        /* Gaya khusus untuk input yang terkunci (readonly) */
         .locked-input { background-color: #333; color: #2ecc71; font-weight: bold; cursor: not-allowed; }
 
         .btn-submit { background-color: #2ecc71; color: #1e1e1e; padding: 12px 20px; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
         .btn-submit:hover { background-color: #27ae60; }
 
-        /* Table */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #7f8c8d; }
         th { color: #2ecc71; }
@@ -41,17 +36,14 @@
 </head>
 <body>
 
-    <!-- Sidebar Menu -->
     <div class="sidebar">
         <h2>Admin Panel</h2>
         <button class="menu-btn active" onclick="openTab('transaksi')">Input Transaksi</button>
         <button class="menu-btn" onclick="openTab('promo')">Kelola Promo</button>
     </div>
 
-    <!-- Area Konten Utama -->
     <div class="main-content">
         
-        <!-- Tab 1: Input Transaksi -->
         <div id="transaksi" class="tab-content active">
             <h3>Input Transaksi Baru</h3>
             <form id="form-transaksi">
@@ -68,46 +60,55 @@
                     <input type="text" placeholder="Contoh: Putih">
                 </div>
                 
-                <!-- DROPDOWN LAYANAN BARU -->
+                <!-- DROPDOWN LAYANAN -->
                 <div class="form-group">
                     <label>Layanan (Treatment)</label>
-                    <select id="pilih-layanan" required>
-                        <option value="" disabled selected>-- Pilih Layanan --</option>
-                        <option value="30000">Standar Cleaning (Rp 30.000)</option>
-                        <option value="40000">Deep Clean Standar (Rp 40.000)</option>
-                        <option value="50000">Deep Clean Premium (Rp 50.000)</option>
+                    <select id="pilih-layanan" onchange="updateHarga()" required>
+                        <option value="" data-price="0" disabled selected>-- Pilih Layanan --</option>
+                        <option value="Standar Cleaning" data-price="30000">Standar Cleaning (Rp 30.000)</option>
+                        <option value="Deep Clean Standar" data-price="40000">Deep Clean Standar (Rp 40.000)</option>
+                        <option value="Deep Clean Premium" data-price="50000">Deep Clean Premium (Rp 50.000)</option>
                     </select>
                 </div>
                 
-                <!-- HARGA DASAR OTOMATIS TERKUNCI -->
                 <div class="form-group">
                     <label>Harga Dasar (Rp)</label>
-                    <input type="number" id="harga-dasar" class="locked-input" placeholder="0" readonly>
+                    <input type="number" id="harga-dasar" class="locked-input" value="0" readonly>
+                </div>
+
+                <!-- TAMBAHAN: DROPDOWN ONE DAY SERVICE -->
+                <div class="form-group">
+                    <label>One Day Service</label>
+                    <select id="pilih-oneday" onchange="hitungTotal()">
+                        <option value="0">Tidak</option>
+                        <option value="15000">Ya (+Rp 15.000)</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
                     <label>Pilih Promo</label>
-                    <select id="pilih-promo">
+                    <select id="pilih-promo" onchange="hitungTotal()">
                         <option value="0">Tidak ada promo</option>
                         <option value="20000">OPENING20 - Potongan Rp 20.000</option>
                     </select>
                 </div>
+                
                 <div class="form-group">
                     <label>Total Tagihan (Rp)</label>
-                    <input type="number" id="total-tagihan" class="locked-input" placeholder="0" readonly>
+                    <input type="number" id="total-tagihan" class="locked-input" value="0" readonly>
                 </div>
+                
                 <div class="form-group">
                     <label>Status Pembayaran</label>
                     <select>
-                        <option>Belum Lunas</option>
-                        <option>Lunas</option>
+                        <option value="Belum Lunas">Belum Lunas</option>
+                        <option value="Lunas">Lunas</option>
                     </select>
                 </div>
                 <button type="submit" class="btn-submit">Simpan Transaksi</button>
             </form>
         </div>
 
-        <!-- Tab 2: Kelola Promo -->
         <div id="promo" class="tab-content">
             <h3>Tambah Promo Baru</h3>
             <form id="form-promo" style="margin-bottom: 40px;">
@@ -143,7 +144,6 @@
 
     </div>
 
-    <!-- Script JavaScript Internal -->
     <script>
         function openTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -152,21 +152,22 @@
             event.currentTarget.classList.add('active');
         }
 
-        // Script untuk otomatisasi harga dari dropdown
-        document.getElementById('pilih-layanan').addEventListener('change', function() {
-            // Memasukkan angka (value) dari dropdown ke kolom harga dasar
-            document.getElementById('harga-dasar').value = this.value;
-            // Langsung hitung ulang total tagihan tiap kali layanan diubah
+        function updateHarga() {
+            const selectLayanan = document.getElementById('pilih-layanan');
+            const selectedOption = selectLayanan.options[selectLayanan.selectedIndex];
+            const harga = selectedOption.getAttribute('data-price') || 0;
+            
+            document.getElementById('harga-dasar').value = harga;
             hitungTotal();
-        });
+        }
 
-        document.getElementById('pilih-promo').addEventListener('change', hitungTotal);
-
+        // Kalkulasi Total: (Harga Dasar + One Day Service) - Potongan Promo
         function hitungTotal() {
             const hargaDasar = parseFloat(document.getElementById('harga-dasar').value) || 0;
+            const biayaOneDay = parseFloat(document.getElementById('pilih-oneday').value) || 0;
             const potonganPromo = parseFloat(document.getElementById('pilih-promo').value) || 0;
             
-            let total = hargaDasar - potonganPromo;
+            let total = (hargaDasar + biayaOneDay) - potonganPromo;
             if(total < 0) total = 0; 
 
             document.getElementById('total-tagihan').value = total;
