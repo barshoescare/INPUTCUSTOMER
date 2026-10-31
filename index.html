@@ -184,7 +184,7 @@
                     <tr>
                         <td>${p.kode}</td>
                         <td>Rp ${p.potongan.toLocaleString('id-ID')}</td>
-                        <td><button class="btn-delete" onclick="hapusPromo(${index})">Hapus</button></td>
+                        <td><button class="btn-delete" onclick="hapusPromo('${p.kode}', ${index})">Hapus</button></td>
                     </tr>
                 `;
 
@@ -195,7 +195,6 @@
             hitungTotal();
         }
 
-        // Fungsi Tambah Promo yang Terhubung ke Google Sheets
         function tambahPromo(event) {
             event.preventDefault();
             const btnPromo = document.getElementById('btn-simpan-promo');
@@ -233,10 +232,28 @@
             });
         }
 
-        function hapusPromo(index) {
-            if(confirm('Yakin ingin menghapus promo ini?')) {
-                daftarPromo.splice(index, 1);
-                renderPromo();
+        function hapusPromo(kode, index) {
+            if(confirm(`Yakin ingin menghapus promo ${kode}?`)) {
+                const dataHapus = {
+                    type: "hapus_promo",
+                    kode: kode
+                };
+
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataHapus)
+                })
+                .then(() => {
+                    daftarPromo.splice(index, 1);
+                    renderPromo();
+                    alert('Promo berhasil dihapus dari database!');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Gagal menghapus promo.');
+                });
             }
         }
 
