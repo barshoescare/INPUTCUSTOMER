@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Bar Shoescare</title>
-<style>
-        /* (Biarkan semua style di atas tetap sama, cukup sesuaikan bagian @media print di bawah ini) */
-
+    <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { background-color: #1e1e1e; color: #ffffff; display: flex; min-height: 100vh; flex-direction: row; }
         
@@ -65,31 +63,34 @@
 
         #print-area { display: none; }
 
-        /* PENGATURAN CETAK UTUH DI HP & LAPTOP */
+        /* PERBAIKAN TOTAL FORMAT CETAK UNTUK HP/IOS */
         @media print {
             @page {
-                size: auto;
-                margin: 0mm; /* Menghilangkan margin bawaan kertas printer */
+                size: A4;
+                margin: 0;
             }
-            body, html {
+            html, body {
                 background-color: #1e1e1e !important;
-                height: 100%;
-                width: 100%;
+                width: 100% !important;
+                height: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
             body * { visibility: hidden; }
             #print-area, #print-area * { visibility: visible; }
             #print-area {
                 display: block !important;
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                min-height: 100vh;
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                min-height: 100vh !important;
                 background-color: #1e1e1e !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-                color: #ffffff;
-                padding: 30px;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color: #ffffff !important;
+                padding: 40px !important;
+                box-sizing: border-box;
                 font-family: Arial, sans-serif;
             }
         }
@@ -815,7 +816,7 @@
                     rowOneday.style.display = 'none';
                 }
 
-                    const rowPromo = document.getElementById('row-promo');
+                const rowPromo = document.getElementById('row-promo');
                 if (promoPotonganNominal > 0) {
                     rowPromo.style.display = 'flex';
                     document.getElementById('print-promo-label').innerText = 'Promo (' + promoText + ')';
