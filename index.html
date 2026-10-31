@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Bar Shoescare</title>
+    <!-- Library untuk mengubah HTML menjadi Gambar PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { background-color: #1e1e1e; color: #ffffff; display: flex; min-height: 100vh; flex-direction: row; }
@@ -61,38 +63,15 @@
             .main-content { padding: 15px; }
         }
 
-        #print-area { display: none; }
-
-        /* PERBAIKAN TOTAL FORMAT CETAK UNTUK HP/IOS */
-        @media print {
-            @page {
-                size: A4;
-                margin: 0;
-            }
-            html, body {
-                background-color: #1e1e1e !important;
-                width: 100% !important;
-                height: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            body * { visibility: hidden; }
-            #print-area, #print-area * { visibility: visible; }
-            #print-area {
-                display: block !important;
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                min-height: 100vh !important;
-                background-color: #1e1e1e !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color: #ffffff !important;
-                padding: 40px !important;
-                box-sizing: border-box;
-                font-family: Arial, sans-serif;
-            }
+        /* Tampilan Area Nota / Invoice */
+        #print-area {
+            display: none;
+            width: 450px;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            padding: 35px;
+            font-family: Arial, sans-serif;
+            border-radius: 8px;
         }
     </style>
 </head>
@@ -168,7 +147,7 @@
                         <option value="UNPAID">UNPAID</option>
                     </select>
                 </div>
-                <button type="submit" id="btn-simpan" class="btn-submit">Simpan & Cetak Invoice</button>
+                <button type="submit" id="btn-simpan" class="btn-submit">Simpan & Download Nota PNG</button>
             </form>
         </div>
 
@@ -311,75 +290,75 @@
 
     </div>
 
-    <!-- AREA CETAK INVOICE -->
+    <!-- AREA TEMPLAT INVOICE (DIKONVERSI KE PNG) -->
     <div id="print-area">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px;">
-            <h1 style="color: #2ecc71; font-size: 28px; font-weight: bold; letter-spacing: 1px;">&lt;/BAR SHOESCARE&gt;</h1>
-            <h2 style="color: #2ecc71; font-size: 28px; font-weight: normal; letter-spacing: 2px;">INVOICE</h2>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 35px;">
+            <h1 style="color: #2ecc71; font-size: 26px; font-weight: bold; letter-spacing: 1px;">&lt;/BAR SHOESCARE&gt;</h1>
+            <h2 style="color: #2ecc71; font-size: 26px; font-weight: normal; letter-spacing: 2px;">INVOICE</h2>
         </div>
 
-        <div style="margin-bottom: 30px;">
-            <p style="color: #2ecc71; font-size: 16px; margin-bottom: 12px; font-weight: bold;">CUSTOMER INFO</p>
-            <div style="border-bottom: 1px solid #7f8c8d; padding-bottom: 6px; margin-bottom: 10px; font-size: 16px;">
+        <div style="margin-bottom: 25px;">
+            <p style="color: #2ecc71; font-size: 15px; margin-bottom: 10px; font-weight: bold;">CUSTOMER INFO</p>
+            <div style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-bottom: 8px; font-size: 15px;">
                 <span id="print-nama" style="color: #fff;">Nama Pelanggan</span>
             </div>
-            <div style="border-bottom: 1px solid #7f8c8d; padding-bottom: 6px; font-size: 16px;">
+            <div style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; font-size: 15px;">
                 <span id="print-nowa" style="color: #fff;">No WhatsApp</span>
             </div>
         </div>
 
-        <div style="margin-bottom: 40px;">
-            <p style="color: #2ecc71; font-size: 16px; margin-bottom: 12px; font-weight: bold;">ITEM INFO</p>
-            <div style="border-bottom: 1px solid #7f8c8d; padding-bottom: 6px; font-size: 16px;">
+        <div style="margin-bottom: 35px;">
+            <p style="color: #2ecc71; font-size: 15px; margin-bottom: 10px; font-weight: bold;">ITEM INFO</p>
+            <div style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; font-size: 15px;">
                 <span id="print-warna" style="color: #fff;">Brand / Color</span>
             </div>
         </div>
 
-        <div style="display: flex; justify-content: space-between; color: #2ecc71; font-size: 16px; font-weight: bold; border-bottom: 1px solid #7f8c8d; padding-bottom: 10px; margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; color: #2ecc71; font-size: 15px; font-weight: bold; border-bottom: 1px solid #7f8c8d; padding-bottom: 8px; margin-bottom: 12px;">
             <span>ITEM</span>
             <span>AMOUNT</span>
         </div>
 
-        <div style="display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 8px;">
             <span id="print-layanan">Layanan Cuci</span>
             <span>Rp <span id="print-harga">0</span></span>
         </div>
 
-        <div id="row-oneday" style="display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 10px; color: #bdc3c7;">
+        <div id="row-oneday" style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #bdc3c7;">
             <span id="print-oneday-label">One Day Service</span>
             <span>Rp <span id="print-oneday-harga">0</span></span>
         </div>
 
-        <div id="row-promo" style="display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 20px; color: #e74c3c;">
+        <div id="row-promo" style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 15px; color: #e74c3c;">
             <span id="print-promo-label">Promo Diskon</span>
             <span>- Rp <span id="print-promo-potongan">0</span></span>
         </div>
 
-        <div style="border-bottom: 1px solid #7f8c8d; margin-bottom: 25px;"></div>
+        <div style="border-bottom: 1px solid #7f8c8d; margin-bottom: 20px;"></div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
-            <div style="font-size: 18px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px;">
+            <div style="font-size: 16px;">
                 <strong style="color: #bdc3c7;">Status:</strong> <span id="print-status" style="color: #2ecc71; font-weight: bold;">PAID</span>
             </div>
             <div style="text-align: right;">
-                <span style="color: #2ecc71; font-size: 16px; font-weight: bold; margin-right: 15px;">Total</span>
-                <span style="color: #2ecc71; font-size: 22px; font-weight: bold;">Rp <span id="print-total">0</span></span>
+                <span style="color: #2ecc71; font-size: 15px; font-weight: bold; margin-right: 12px;">Total</span>
+                <span style="color: #2ecc71; font-size: 20px; font-weight: bold;">Rp <span id="print-total">0</span></span>
             </div>
         </div>
 
-        <div style="margin-bottom: 50px;">
-            <p style="color: #2ecc71; font-size: 15px; font-weight: bold; margin-bottom: 8px;">Terms And Conditions</p>
-            <ol style="color: #bdc3c7; font-size: 13px; padding-left: 20px; line-height: 1.6;">
+        <div style="margin-bottom: 40px;">
+            <p style="color: #2ecc71; font-size: 14px; font-weight: bold; margin-bottom: 6px;">Terms And Conditions</p>
+            <ol style="color: #bdc3c7; font-size: 12px; padding-left: 18px; line-height: 1.5;">
                 <li>Kerusakan bawaan sebelum dicuci bukan tanggung jawab Bar Shoescare.</li>
                 <li>Sepatu tidak diambil &gt;30 hari di luar tanggung jawab kami.</li>
             </ol>
         </div>
 
-        <div style="text-align: center; color: #bdc3c7; font-size: 14px; margin-bottom: 50px;">
+        <div style="text-align: center; color: #bdc3c7; font-size: 13px; margin-bottom: 40px;">
             Thank you for trusting Bar Shoescare.
         </div>
 
-        <div style="display: flex; justify-content: space-between; font-size: 14px; color: #bdc3c7;">
+        <div style="display: flex; justify-content: space-between; font-size: 13px; color: #bdc3c7;">
             <span>IG/TIKTOK : barshoescare</span>
             <span>Whatsapp: 081159230600</span>
         </div>
@@ -536,7 +515,7 @@
                         <td>Rp ${parseFloat(t.total).toLocaleString('id-ID')}</td>
                         <td>${t.status}</td>
                         <td>
-                            <button class="btn-print" onclick="cetakInvoiceData(${t.rowIndex})">Nota</button>
+                            <button class="btn-print" onclick="downloadInvoice(${t.rowIndex})">Nota</button>
                             <button class="btn-edit" onclick="bukaEdit(${t.rowIndex})">Edit</button>
                             <button class="btn-delete" onclick="hapusTransaksi(${t.rowIndex})">Hapus</button>
                         </td>
@@ -600,10 +579,7 @@
             });
         }
 
-        function cetakInvoiceData(rowIndex) {
-            const t = daftarTransaksi.find(item => item.rowIndex === rowIndex);
-            if(!t) return;
-
+        function isiDataPrint(t) {
             document.getElementById('print-nama').innerText = t.nama;
             document.getElementById('print-nowa').innerText = t.nowa;
             document.getElementById('print-warna').innerText = t.warna || '-';
@@ -632,8 +608,33 @@
 
             document.getElementById('print-total').innerText = parseFloat(t.total).toLocaleString('id-ID');
             document.getElementById('print-status').innerText = t.status || 'PAID';
+        }
 
-            window.print();
+        function downloadInvoice(rowIndex) {
+            const t = daftarTransaksi.find(item => item.rowIndex === rowIndex);
+            if(!t) return;
+            isiDataPrint(t);
+            prosesDownloadImage(t.nama);
+        }
+
+        function prosesDownloadImage(namaPelanggan) {
+            const printArea = document.getElementById('print-area');
+            printArea.style.display = 'block';
+
+            html2canvas(printArea, {
+                scale: 2, // Kualitas gambar tinggi (tajam)
+                backgroundColor: '#1e1e1e'
+            }).then(canvas => {
+                printArea.style.display = 'none';
+                const link = document.createElement('a');
+                link.download = `Invoice-${namaPelanggan.replace(/\s+/g, '_')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(err => {
+                printArea.style.display = 'none';
+                alert('Gagal mendownload invoice.');
+                console.error(err);
+            });
         }
 
         function tambahPromo(event) {
@@ -762,7 +763,7 @@
         function simpanTransaksi(event) {
             event.preventDefault();
             const btn = document.getElementById('btn-simpan');
-            btn.textContent = "Menyimpan & Mencetak...";
+            btn.textContent = "Menyimpan & Mengunduh Nota...";
             btn.disabled = true;
 
             const namaVal = document.getElementById('nama').value;
@@ -801,32 +802,19 @@
 
             fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) })
             .then(() => {
-                document.getElementById('print-nama').innerText = namaVal;
-                document.getElementById('print-nowa').innerText = nowaVal;
-                document.getElementById('print-warna').innerText = warnaVal;
-                document.getElementById('print-layanan').innerText = layananVal;
-                document.getElementById('print-harga').innerText = parseFloat(hargaVal).toLocaleString('id-ID');
-                
-                const rowOneday = document.getElementById('row-oneday');
-                if (onedaySelect.value === "15000") {
-                    rowOneday.style.display = 'flex';
-                    document.getElementById('print-oneday-label').innerText = 'One Day Service';
-                    document.getElementById('print-oneday-harga').innerText = '15.000';
-                } else {
-                    rowOneday.style.display = 'none';
-                }
+                const transaksiBaru = {
+                    nama: namaVal,
+                    nowa: nowaVal,
+                    warna: warnaVal,
+                    layanan: layananVal,
+                    harga: hargaVal,
+                    oneday: onedayText,
+                    promo: promoText,
+                    total: totalVal,
+                    status: statusVal
+                };
 
-                const rowPromo = document.getElementById('row-promo');
-                if (promoPotonganNominal > 0) {
-                    rowPromo.style.display = 'flex';
-                    document.getElementById('print-promo-label').innerText = 'Promo (' + promoText + ')';
-                    document.getElementById('print-promo-potongan').innerText = promoPotonganNominal.toLocaleString('id-ID');
-                } else {
-                    rowPromo.style.display = 'none';
-                }
-
-                document.getElementById('print-total').innerText = parseFloat(totalVal).toLocaleString('id-ID');
-                document.getElementById('print-status').innerText = statusVal;
+                isiDataPrint(transaksiBaru);
 
                 alert('Transaksi berhasil disimpan ke Database!');
                 document.getElementById('form-transaksi').reset();
@@ -835,7 +823,8 @@
                 btn.textContent = "Simpan & Cetak Invoice";
                 btn.disabled = false;
 
-                window.print();
+                // Langsung unduh sebagai file gambar PNG
+                prosesDownloadImage(namaVal);
             });
         }
 
