@@ -132,7 +132,9 @@
                         <th>Aksi</th>
                     </tr>
                 </thead>
-                <tbody id="tabel-promo-body"></tbody>
+                <tbody id="tabel-promo-body">
+                    <tr><td colspan="3" style="text-align: center;">Memuat data promo...</td></tr>
+                </tbody>
             </table>
         </div>
 
@@ -141,9 +143,7 @@
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyNUo5NP-JDgwU4Kh5b47a4CTxe2ulBd9S1OyYT_uN3EgG2hNEEbyLp7fwyn7mzK-EW/exec";
 
-        let daftarPromo = [
-            { kode: "OPENING20", potongan: 20000 }
-        ];
+        let daftarPromo = [];
 
         function openTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -172,6 +172,20 @@
             document.getElementById('total-tagihan').value = total;
         }
 
+        // Ambil data promo langsung dari Google Sheets
+        function muatPromo() {
+            fetch(SCRIPT_URL)
+            .then(response => response.json())
+            .then(data => {
+                daftarPromo = data;
+                renderPromo();
+            })
+            .catch(error => {
+                console.error('Gagal memuat promo:', error);
+                document.getElementById('tabel-promo-body').innerHTML = `<tr><td colspan="3" style="text-align: center; color: #e74c3c;">Gagal memuat data promo</td></tr>`;
+            });
+        }
+
         function renderPromo() {
             const tbody = document.getElementById('tabel-promo-body');
             const selectPromo = document.getElementById('pilih-promo');
@@ -179,17 +193,22 @@
             tbody.innerHTML = '';
             selectPromo.innerHTML = '<option value="0">Tidak ada promo</option>';
 
+            if (daftarPromo.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center;">Belum ada promo aktif.</td></tr>`;
+                return;
+            }
+
             daftarPromo.forEach((p, index) => {
                 tbody.innerHTML += `
                     <tr>
                         <td>${p.kode}</td>
-                        <td>Rp ${p.potongan.toLocaleString('id-ID')}</td>
+                        <td>Rp ${parseFloat(p.potongan).toLocaleString('id-ID')}</td>
                         <td><button class="btn-delete" onclick="hapusPromo('${p.kode}', ${index})">Hapus</button></td>
                     </tr>
                 `;
 
                 selectPromo.innerHTML += `
-                    <option value="${p.potongan}">${p.kode} - Potongan Rp ${p.potongan.toLocaleString('id-ID')}</option>
+                    <option value="${p.potongan}">${p.kode} - Potongan Rp ${parseFloat(p.potongan).toLocaleString('id-ID')}</option>
                 `;
             });
             hitungTotal();
@@ -217,12 +236,11 @@
                 body: JSON.stringify(dataPromo)
             })
             .then(() => {
-                daftarPromo.push({ kode: kode, potongan: potongan });
                 document.getElementById('form-promo').reset();
-                renderPromo();
                 alert('Promo berhasil disimpan ke Database!');
                 btnPromo.textContent = "Simpan Promo";
                 btnPromo.disabled = false;
+                muatPromo(); // Refresh data dari sheet
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -246,9 +264,8 @@
                     body: JSON.stringify(dataHapus)
                 })
                 .then(() => {
-                    daftarPromo.splice(index, 1);
-                    renderPromo();
                     alert('Promo berhasil dihapus dari database!');
+                    muatPromo(); // Refresh data dari sheet
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -257,7 +274,8 @@
             }
         }
 
-        renderPromo();
+        // Muat data promo saat pertama kali halaman dibuka
+        muatPromo();
 
         function simpanTransaksi(event) {
             event.preventDefault();
