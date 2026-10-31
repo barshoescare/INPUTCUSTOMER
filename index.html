@@ -36,7 +36,7 @@
         .btn-edit { background-color: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-right: 5px; }
         .btn-edit:hover { background-color: #d35400; }
 
-        #modal-edit { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; }
+        #modal-edit, #modal-edit-pengeluaran { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; }
         .modal-box { background: #2b2d2f; padding: 30px; border-radius: 8px; width: 400px; max-height: 90vh; overflow-y: auto; }
     </style>
 </head>
@@ -137,10 +137,10 @@
             </table>
         </div>
 
-        <!-- TAB 3: INPUT PENGELUARAN -->
+        <!-- TAB 3: INPUT & LIST PENGELUARAN -->
         <div id="pengeluaran" class="tab-content">
             <h3>Input Pengeluaran Baru</h3>
-            <form id="form-pengeluaran" onsubmit="simpanPengeluaran(event)">
+            <form id="form-pengeluaran" onsubmit="simpanPengeluaran(event)" style="margin-bottom: 40px;">
                 <div class="form-group">
                     <label>Isi Pengeluaran (Keterangan)</label>
                     <input type="text" id="ket-pengeluaran" placeholder="Contoh: Beli sabun cuci sepatu..." required>
@@ -159,6 +159,22 @@
                 </div>
                 <button type="submit" id="btn-simpan-pengeluaran" class="btn-submit">Simpan Pengeluaran</button>
             </form>
+
+            <h3>Daftar Pengeluaran</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Keterangan</th>
+                        <th>Total Harga</th>
+                        <th>Sumber Dana</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tabel-pengeluaran-body">
+                    <tr><td colspan="5" style="text-align: center;">Memuat data pengeluaran...</td></tr>
+                </tbody>
+            </table>
         </div>
 
         <!-- TAB 4: KELOLA PROMO -->
@@ -218,11 +234,33 @@
         </div>
     </div>
 
+    <!-- MODAL EDIT PENGELUARAN -->
+    <div id="modal-edit-pengeluaran">
+        <div class="modal-box">
+            <h3>Edit Pengeluaran</h3>
+            <form id="form-edit-pengeluaran" onsubmit="simpanEditPengeluaran(event)">
+                <input type="hidden" id="edit-pengeluaran-rowindex">
+                <div class="form-group"><label>Keterangan</label><input type="text" id="edit-ket-pengeluaran" required></div>
+                <div class="form-group"><label>Total Harga</label><input type="number" id="edit-total-pengeluaran" required></div>
+                <div class="form-group">
+                    <label>Sumber Dana</label>
+                    <select id="edit-sumber-dana" required>
+                        <option value="Pribadi">Pribadi</option>
+                        <option value="Tidak">Tidak (Kas Usaha)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit">Simpan Perubahan</button>
+                <button type="button" class="btn-delete" style="width:100%; margin-top:10px;" onclick="tutupModalPengeluaran()">Batal</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyNUo5NP-JDgwU4Kh5b47a4CTxe2ulBd9S1OyYT_uN3EgG2hNEEbyLp7fwyn7mzK-EW/exec";
 
         let daftarPromo = [];
         let daftarTransaksi = [];
+        let daftarPengeluaran = [];
 
         function openTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -232,6 +270,8 @@
 
             if(tabName === 'pelanggan') {
                 muatTransaksi();
+            } else if(tabName === 'pengeluaran') {
+                muatPengeluaran();
             }
         }
 
@@ -324,6 +364,40 @@
             });
         }
 
+        function muatPengeluaran() {
+            fetch(SCRIPT_URL + "?action=get_pengeluaran")
+            .then(res => res.json())
+            .then(data => {
+                daftarPengeluaran = data;
+                renderPengeluaran();
+            });
+        }
+
+        function renderPengeluaran() {
+            const tbody = document.getElementById('tabel-pengeluaran-body');
+            tbody.innerHTML = '';
+
+            if (daftarPengeluaran.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Belum ada data pengeluaran.</td></tr>`;
+                return;
+            }
+
+            daftarPengeluaran.forEach((p) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${p.tanggal}</td>
+                        <td>${p.keterangan}</td>
+                        <td>Rp ${parseFloat(p.totalHarga).toLocaleString('id-ID')}</td>
+                        <td>${p.sumberDana}</td>
+                        <td>
+                            <button class="btn-edit" onclick="bukaEditPengeluaran(${p.rowIndex})">Edit</button>
+                            <button class="btn-delete" onclick="hapusPengeluaran(${p.rowIndex})">Hapus</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
         function tambahPromo(event) {
             event.preventDefault();
             const btn = document.getElementById('btn-simpan-promo');
@@ -357,6 +431,13 @@
             if(confirm('Yakin ingin menghapus data pelanggan ini?')) {
                 fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: "hapus_transaksi", rowIndex: rowIndex }) })
                 .then(() => { alert('Data berhasil dihapus!'); muatTransaksi(); });
+            }
+        }
+
+        function hapusPengeluaran(rowIndex) {
+            if(confirm('Yakin ingin menghapus pengeluaran ini?')) {
+                fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: "hapus_pengeluaran", rowIndex: rowIndex }) })
+                .then(() => { alert('Pengeluaran berhasil dihapus!'); muatPengeluaran(); });
             }
         }
 
@@ -403,6 +484,40 @@
                 alert('Data berhasil diperbarui!');
                 tutupModal();
                 muatTransaksi();
+            });
+        }
+
+        function bukaEditPengeluaran(rowIndex) {
+            const p = daftarPengeluaran.find(item => item.rowIndex === rowIndex);
+            if(!p) return;
+
+            document.getElementById('edit-pengeluaran-rowindex').value = p.rowIndex;
+            document.getElementById('edit-ket-pengeluaran').value = p.keterangan;
+            document.getElementById('edit-total-pengeluaran').value = p.totalHarga;
+            document.getElementById('edit-sumber-dana').value = p.sumberDana;
+
+            document.getElementById('modal-edit-pengeluaran').style.display = 'flex';
+        }
+
+        function tutupModalPengeluaran() {
+            document.getElementById('modal-edit-pengeluaran').style.display = 'none';
+        }
+
+        function simpanEditPengeluaran(event) {
+            event.preventDefault();
+            const data = {
+                type: "edit_pengeluaran",
+                rowIndex: parseInt(document.getElementById('edit-pengeluaran-rowindex').value),
+                keterangan: document.getElementById('edit-ket-pengeluaran').value,
+                totalHarga: parseFloat(document.getElementById('edit-total-pengeluaran').value),
+                sumberDana: document.getElementById('edit-sumber-dana').value
+            };
+
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) })
+            .then(() => {
+                alert('Pengeluaran berhasil diperbarui!');
+                tutupModalPengeluaran();
+                muatPengeluaran();
             });
         }
 
@@ -455,6 +570,7 @@
                 document.getElementById('form-pengeluaran').reset();
                 btn.textContent = "Simpan Pengeluaran";
                 btn.disabled = false;
+                muatPengeluaran();
             })
             .catch(error => {
                 console.error('Error:', error);
