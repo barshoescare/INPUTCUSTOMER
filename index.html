@@ -68,7 +68,7 @@
                     <input type="text" id="warna" placeholder="Contoh: Putih">
                 </div>
                 
-                <!-- Dropdown Layanan (Otomatis Mengisi Harga Dasar) -->
+                <!-- Dropdown Layanan -->
                 <div class="form-group">
                     <label>Layanan (Treatment)</label>
                     <select id="pilih-layanan" onchange="updateHarga()" required>
@@ -93,7 +93,7 @@
                     </select>
                 </div>
 
-                <!-- Dropdown Pilihan Promo (Sinkron dengan Tab Kelola Promo) -->
+                <!-- Dropdown Pilihan Promo -->
                 <div class="form-group">
                     <label>Pilih Promo</label>
                     <select id="pilih-promo" onchange="hitungTotal()">
@@ -113,7 +113,7 @@
                         <option value="Lunas">Lunas</option>
                     </select>
                 </div>
-                <button type="submit" class="btn-submit">Simpan Transaksi</button>
+                <button type="submit" id="btn-simpan" class="btn-submit">Simpan Transaksi</button>
             </form>
         </div>
 
@@ -141,22 +141,21 @@
                         <th>Aksi</th>
                     </tr>
                 </thead>
-                <tbody id="tabel-promo-body">
-                    <!-- Data promo dinamis muncul di sini -->
-                </tbody>
+                <tbody id="tabel-promo-body"></tbody>
             </table>
         </div>
 
     </div>
 
-    <!-- Script JavaScript Terpadu -->
+    <!-- Script Terintegrasi dengan Google Sheets -->
     <script>
-        // Data penyimpanan sementara untuk daftar promo
+        // URL Apps Script Google Sheets-mu
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyNUo5NP-JDgwU4Kh5b47a4CTxe2ulBd9S1OyYT_uN3EgG2hNEEbyLp7fwyn7mzK-EW/exec";
+
         let daftarPromo = [
             { kode: "OPENING20", potongan: 20000 }
         ];
 
-        // Fungsi Navigasi Tab
         function openTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
@@ -164,7 +163,6 @@
             event.currentTarget.classList.add('active');
         }
 
-        // Fungsi Update Harga Berdasarkan Layanan yang Dipilih
         function updateHarga() {
             const selectLayanan = document.getElementById('pilih-layanan');
             const selectedOption = selectLayanan.options[selectLayanan.selectedIndex];
@@ -174,7 +172,6 @@
             hitungTotal();
         }
 
-        // Fungsi Kalkulasi Total (Harga Dasar + One Day Service - Diskon Promo)
         function hitungTotal() {
             const hargaDasar = parseFloat(document.getElementById('harga-dasar').value) || 0;
             const biayaOneDay = parseFloat(document.getElementById('pilih-oneday').value) || 0;
@@ -186,7 +183,6 @@
             document.getElementById('total-tagihan').value = total;
         }
 
-        // Fungsi Merender Daftar Promo ke Tabel dan Dropdown
         function renderPromo() {
             const tbody = document.getElementById('tabel-promo-body');
             const selectPromo = document.getElementById('pilih-promo');
@@ -195,7 +191,6 @@
             selectPromo.innerHTML = '<option value="0">Tidak ada promo</option>';
 
             daftarPromo.forEach((p, index) => {
-                // Tampilkan di tabel kelola promo
                 tbody.innerHTML += `
                     <tr>
                         <td>${p.kode}</td>
@@ -204,7 +199,6 @@
                     </tr>
                 `;
 
-                // Tampilkan juga sebagai opsi di dropdown form transaksi
                 selectPromo.innerHTML += `
                     <option value="${p.potongan}">${p.kode} - Potongan Rp ${p.potongan.toLocaleString('id-ID')}</option>
                 `;
@@ -212,7 +206,6 @@
             hitungTotal();
         }
 
-        // Fungsi Menambah Promo Baru
         function tambahPromo(event) {
             event.preventDefault();
             const kode = document.getElementById('input-kode-promo').value.trim().toUpperCase();
@@ -226,7 +219,6 @@
             }
         }
 
-        // Fungsi Menghapus Promo
         function hapusPromo(index) {
             if(confirm('Yakin ingin menghapus promo ini?')) {
                 daftarPromo.splice(index, 1);
@@ -234,13 +226,52 @@
             }
         }
 
-        // Inisialisasi awal saat halaman dimuat
         renderPromo();
 
-        // Fungsi Placeholder untuk Tombol Simpan Transaksi
+        // Fungsi Mengirim Data ke Google Sheets secara Real-Time
         function simpanTransaksi(event) {
             event.preventDefault();
-            alert('Data transaksi siap dikirim! (Hubungkan URL Google Apps Script di sini nanti).');
+            
+            const btnSimpan = document.getElementById('btn-simpan');
+            btnSimpan.textContent = "Menyimpan...";
+            btnSimpan.disabled = true;
+
+            // Ambil data dari form
+            const dataTransaksi = {
+                nama: document.getElementById('nama').value,
+                nowa: document.getElementById('nowa').value,
+                warna: document.getElementById('warna').value,
+                layanan: document.getElementById('pilih-layanan').value,
+                harga: document.getElementById('harga-dasar').value,
+                oneday: document.getElementById('pilih-oneday').options[document.getElementById('pilih-oneday').selectedIndex].text,
+                promo: document.getElementById('pilih-promo').options[document.getElementById('pilih-promo').selectedIndex].text,
+                total: document.getElementById('total-tagihan').value,
+                status: document.getElementById('status-bayar').value
+            };
+
+            // Kirim pakai fetch ke Google Apps Script
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors', // Diperlukan agar tidak terkena blokir CORS browser
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dataTransaksi)
+            })
+            .then(() => {
+                alert('Transaksi berhasil disimpan ke Database!');
+                document.getElementById('form-transaksi').reset();
+                document.getElementById('harga-dasar').value = 0;
+                document.getElementById('total-tagihan').value = 0;
+                btnSimpan.textContent = "Simpan Transaksi";
+                btnSimpan.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Gagal menyimpan transaksi. Coba lagi.');
+                btnSimpan.textContent = "Simpan Transaksi";
+                btnSimpan.disabled = false;
+            });
         }
     </script>
 </body>
