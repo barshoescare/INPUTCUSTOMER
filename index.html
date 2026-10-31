@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Bar Shoescare</title>
-    <!-- Library untuk mengubah area nota menjadi gambar PNG -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
@@ -63,7 +62,6 @@
             .main-content { padding: 15px; }
         }
 
-        /* Area Cetak Invoice Tersembunyi (Akan dibaca oleh script untuk dijadikan gambar) */
         #print-area {
             display: none;
             width: 450px;
@@ -147,7 +145,7 @@
                         <option value="UNPAID">UNPAID</option>
                     </select>
                 </div>
-                <button type="submit" id="btn-simpan" class="btn-submit">Simpan & Download Nota PNG</button>
+                <button type="submit" id="btn-simpan" class="btn-submit">Simpan & Buka Nota</button>
             </form>
         </div>
 
@@ -290,9 +288,8 @@
 
     </div>
 
-    <!-- AREA TEMPLAT INVOICE (DIKONVERSI KE PNG) -->
+    <!-- AREA TEMPLAT INVOICE (DIKONVERSI KE GAMBAR) -->
     <div id="print-area">
-        <!-- LOGO (1 Baris: Simbol hijau, Teks Putih, Penutup hijau) -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px;">
             <h1 style="font-size: 24px; font-weight: bold; letter-spacing: 0.5px; white-space: nowrap;">
                 <span style="color: #2ecc71;">&lt;/</span><span style="color: #ffffff;">BAR SHOESCARE</span><span style="color: #2ecc71;">&gt;</span>
@@ -518,7 +515,7 @@
                         <td>Rp ${parseFloat(t.total).toLocaleString('id-ID')}</td>
                         <td>${t.status}</td>
                         <td>
-                            <button class="btn-print" onclick="downloadInvoice(${t.rowIndex})">Nota</button>
+                            <button class="btn-print" onclick="bukaNotaBaru(${t.rowIndex})">Nota</button>
                             <button class="btn-edit" onclick="bukaEdit(${t.rowIndex})">Edit</button>
                             <button class="btn-delete" onclick="hapusTransaksi(${t.rowIndex})">Hapus</button>
                         </td>
@@ -613,14 +610,14 @@
             document.getElementById('print-status').innerText = t.status || 'PAID';
         }
 
-        function downloadInvoice(rowIndex) {
+        function bukaNotaBaru(rowIndex) {
             const t = daftarTransaksi.find(item => item.rowIndex === rowIndex);
             if(!t) return;
             isiDataPrint(t);
-            prosesDownloadImage(t.nama);
+            generateDanBukaGambar();
         }
 
-        function prosesDownloadImage(namaPelanggan) {
+        function generateDanBukaGambar() {
             const printArea = document.getElementById('print-area');
             printArea.style.display = 'block';
 
@@ -630,17 +627,25 @@
                 useCORS: true
             }).then(canvas => {
                 printArea.style.display = 'none';
-                const link = document.createElement('a');
-                link.download = `Invoice-${namaPelanggan.replace(/\s+/g, '_')}.png`;
-                link.href = canvas.toDataURL('image/png');
+                const imageData = canvas.toDataURL('image/png');
                 
-                // Memicu klik unduh secara otomatis
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                // Membuka gambar di tab baru khusus iOS agar aman dan mudah disimpan
+                const newWindow = window.open();
+                if (newWindow) {
+                    newWindow.document.write(`
+                        <html>
+                            <head><title>Invoice - Bar Shoescare</title></head>
+                            <body style="background:#1e1e1e; margin:0; display:flex; justify-content:center; align-items:center; height:100vh;">
+                                <img src="${imageData}" style="max-width:100%; height:auto; box-shadow:0 0 15px rgba(0,0,0,0.8);" />
+                            </body>
+                        </html>
+                    `);
+                } else {
+                    alert('Mohon izinkan pop-up pada browser Anda.');
+                }
             }).catch(err => {
                 printArea.style.display = 'none';
-                alert('Gagal mendownload invoice.');
+                alert('Gagal membuat gambar nota.');
                 console.error(err);
             });
         }
@@ -757,7 +762,7 @@
                 rowIndex: parseInt(document.getElementById('edit-pengeluaran-rowindex').value),
                 keterangan: document.getElementById('edit-ket-pengeluaran').value,
                 totalHarga: parseFloat(document.getElementById('edit-total-pengeluaran').value),
-                sumberDana: document.getElementById('edit-sumber-dana').value
+                sumberDana: document.getElementById('sumber-dana').value
             };
 
             fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) })
@@ -771,7 +776,7 @@
         function simpanTransaksi(event) {
             event.preventDefault();
             const btn = document.getElementById('btn-simpan');
-            btn.textContent = "Menyimpan & Mengunduh Nota...";
+            btn.textContent = "Menyimpan & Membuka Nota...";
             btn.disabled = true;
 
             const namaVal = document.getElementById('nama').value;
@@ -828,11 +833,11 @@
                 document.getElementById('form-transaksi').reset();
                 document.getElementById('harga-dasar').value = 0;
                 document.getElementById('total-tagihan').value = 0;
-                btn.textContent = "Simpan & Download Nota PNG";
+                btn.textContent = "Simpan & Buka Nota";
                 btn.disabled = false;
 
-                // Langsung unduh sebagai file gambar PNG
-                prosesDownloadImage(namaVal);
+                // Membuka nota dalam bentuk gambar di tab baru
+                generateDanBukaGambar();
             });
         }
 
