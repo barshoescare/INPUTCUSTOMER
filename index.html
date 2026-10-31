@@ -13,7 +13,7 @@
         .menu-btn { display: block; width: 100%; padding: 15px; margin-bottom: 10px; background: transparent; color: #fff; border: 1px solid #7f8c8d; border-radius: 5px; cursor: pointer; text-align: left; font-size: 16px; }
         .menu-btn.active, .menu-btn:hover { background-color: #2ecc71; color: #1e1e1e; border-color: #2ecc71; font-weight: bold; }
 
-        .main-content { flex: 1; padding: 40px; }
+        .main-content { flex: 1; padding: 40px; overflow-x: auto; }
         .tab-content { display: none; background-color: #2b2d2f; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         .tab-content.active { display: block; }
         h3 { color: #2ecc71; margin-bottom: 20px; font-size: 24px; border-bottom: 1px solid #7f8c8d; padding-bottom: 10px; }
@@ -28,11 +28,17 @@
         .btn-submit { background-color: #2ecc71; color: #1e1e1e; padding: 12px 20px; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
         .btn-submit:hover { background-color: #27ae60; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #7f8c8d; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #7f8c8d; }
         th { color: #2ecc71; }
         .btn-delete { background-color: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
         .btn-delete:hover { background-color: #c0392b; }
+        .btn-edit { background-color: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-right: 5px; }
+        .btn-edit:hover { background-color: #d35400; }
+
+        /* Modal Edit */
+        #modal-edit { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; }
+        .modal-box { background: #2b2d2f; padding: 30px; border-radius: 8px; width: 400px; max-height: 90vh; overflow-y: auto; }
     </style>
 </head>
 <body>
@@ -40,12 +46,13 @@
     <div class="sidebar">
         <h2>Admin Panel</h2>
         <button class="menu-btn active" onclick="openTab('transaksi')">Input Transaksi</button>
+        <button class="menu-btn" onclick="openTab('pelanggan')">Data Pelanggan</button>
         <button class="menu-btn" onclick="openTab('promo')">Kelola Promo</button>
     </div>
 
     <div class="main-content">
         
-        <!-- TAB 1: TRANSAKSI -->
+        <!-- TAB 1: INPUT TRANSAKSI -->
         <div id="transaksi" class="tab-content active">
             <h3>Input Transaksi Baru</h3>
             <form id="form-transaksi" onsubmit="simpanTransaksi(event)">
@@ -108,7 +115,29 @@
             </form>
         </div>
 
-        <!-- TAB 2: KELOLA PROMO -->
+        <!-- TAB 2: DATA PELANGGAN -->
+        <div id="pelanggan" class="tab-content">
+            <h3>Daftar Pelanggan & Transaksi</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Nama</th>
+                        <th>No WA</th>
+                        <th>Warna</th>
+                        <th>Layanan</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tabel-pelanggan-body">
+                    <tr><td colspan="8" style="text-align: center;">Memuat data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- TAB 3: KELOLA PROMO -->
         <div id="promo" class="tab-content">
             <h3>Tambah Promo Baru</h3>
             <form id="form-promo" onsubmit="tambahPromo(event)" style="margin-bottom: 40px;">
@@ -132,31 +161,60 @@
                         <th>Aksi</th>
                     </tr>
                 </thead>
-                <tbody id="tabel-promo-body">
-                    <tr><td colspan="3" style="text-align: center;">Memuat data promo...</td></tr>
-                </tbody>
+                <tbody id="tabel-promo-body"></tbody>
             </table>
         </div>
 
+    </div>
+
+    <!-- MODAL EDIT TRANSAKSI -->
+    <div id="modal-edit">
+        <div class="modal-box">
+            <h3>Edit Transaksi</h3>
+            <form id="form-edit" onsubmit="simpanEditTransaksi(event)">
+                <input type="hidden" id="edit-rowindex">
+                <div class="form-group"><label>Nama</label><input type="text" id="edit-nama" required></div>
+                <div class="form-group"><label>No WA</label><input type="text" id="edit-nowa" required></div>
+                <div class="form-group"><label>Warna</label><input type="text" id="edit-warna"></div>
+                <div class="form-group"><label>Layanan</label><input type="text" id="edit-layanan" required></div>
+                <div class="form-group"><label>Harga Dasar</label><input type="number" id="edit-harga" required></div>
+                <div class="form-group"><label>One Day Service</label><input type="text" id="edit-oneday"></div>
+                <div class="form-group"><label>Promo</label><input type="text" id="edit-promo"></div>
+                <div class="form-group"><label>Total Tagihan</label><input type="number" id="edit-total" required></div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="edit-status">
+                        <option value="Belum Lunas">Belum Lunas</option>
+                        <option value="Lunas">Lunas</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit">Simpan Perubahan</button>
+                <button type="button" class="btn-delete" style="width:100%; margin-top:10px;" onclick="tutupModal()">Batal</button>
+            </form>
+        </div>
     </div>
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyNUo5NP-JDgwU4Kh5b47a4CTxe2ulBd9S1OyYT_uN3EgG2hNEEbyLp7fwyn7mzK-EW/exec";
 
         let daftarPromo = [];
+        let daftarTransaksi = [];
 
         function openTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(tabName).classList.add('active');
             event.currentTarget.classList.add('active');
+
+            if(tabName === 'pelanggan') {
+                muatTransaksi();
+            }
         }
 
         function updateHarga() {
             const selectLayanan = document.getElementById('pilih-layanan');
             const selectedOption = selectLayanan.options[selectLayanan.selectedIndex];
             const harga = selectedOption.getAttribute('data-price') || 0;
-            
             document.getElementById('harga-dasar').value = harga;
             hitungTotal();
         }
@@ -165,31 +223,23 @@
             const hargaDasar = parseFloat(document.getElementById('harga-dasar').value) || 0;
             const biayaOneDay = parseFloat(document.getElementById('pilih-oneday').value) || 0;
             const potonganPromo = parseFloat(document.getElementById('pilih-promo').value) || 0;
-            
             let total = (hargaDasar + biayaOneDay) - potonganPromo;
             if(total < 0) total = 0; 
-
             document.getElementById('total-tagihan').value = total;
         }
 
-        // Ambil data promo langsung dari Google Sheets
         function muatPromo() {
-            fetch(SCRIPT_URL)
-            .then(response => response.json())
+            fetch(SCRIPT_URL + "?action=get_promo")
+            .then(res => res.json())
             .then(data => {
                 daftarPromo = data;
                 renderPromo();
-            })
-            .catch(error => {
-                console.error('Gagal memuat promo:', error);
-                document.getElementById('tabel-promo-body').innerHTML = `<tr><td colspan="3" style="text-align: center; color: #e74c3c;">Gagal memuat data promo</td></tr>`;
             });
         }
 
         function renderPromo() {
             const tbody = document.getElementById('tabel-promo-body');
             const selectPromo = document.getElementById('pilih-promo');
-            
             tbody.innerHTML = '';
             selectPromo.innerHTML = '<option value="0">Tidak ada promo</option>';
 
@@ -203,10 +253,9 @@
                     <tr>
                         <td>${p.kode}</td>
                         <td>Rp ${parseFloat(p.potongan).toLocaleString('id-ID')}</td>
-                        <td><button class="btn-delete" onclick="hapusPromo('${p.kode}', ${index})">Hapus</button></td>
+                        <td><button class="btn-delete" onclick="hapusPromo('${p.kode}')">Hapus</button></td>
                     </tr>
                 `;
-
                 selectPromo.innerHTML += `
                     <option value="${p.potongan}">${p.kode} - Potongan Rp ${parseFloat(p.potongan).toLocaleString('id-ID')}</option>
                 `;
@@ -214,76 +263,132 @@
             hitungTotal();
         }
 
-        function tambahPromo(event) {
-            event.preventDefault();
-            const btnPromo = document.getElementById('btn-simpan-promo');
-            btnPromo.textContent = "Menyimpan...";
-            btnPromo.disabled = true;
-
-            const kode = document.getElementById('input-kode-promo').value.trim().toUpperCase();
-            const potongan = parseFloat(document.getElementById('input-potongan').value) || 0;
-
-            const dataPromo = {
-                type: "promo",
-                kode: kode,
-                potongan: potongan
-            };
-
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dataPromo)
-            })
-            .then(() => {
-                document.getElementById('form-promo').reset();
-                alert('Promo berhasil disimpan ke Database!');
-                btnPromo.textContent = "Simpan Promo";
-                btnPromo.disabled = false;
-                muatPromo(); // Refresh data dari sheet
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Gagal menyimpan promo.');
-                btnPromo.textContent = "Simpan Promo";
-                btnPromo.disabled = false;
+        function muatTransaksi() {
+            fetch(SCRIPT_URL + "?action=get_transaksi")
+            .then(res => res.json())
+            .then(data => {
+                daftarTransaksi = data;
+                renderTransaksi();
             });
         }
 
-        function hapusPromo(kode, index) {
-            if(confirm(`Yakin ingin menghapus promo ${kode}?`)) {
-                const dataHapus = {
-                    type: "hapus_promo",
-                    kode: kode
-                };
+        function renderTransaksi() {
+            const tbody = document.getElementById('tabel-pelanggan-body');
+            tbody.innerHTML = '';
 
-                fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dataHapus)
-                })
-                .then(() => {
-                    alert('Promo berhasil dihapus dari database!');
-                    muatPromo(); // Refresh data dari sheet
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Gagal menghapus promo.');
-                });
+            if (daftarTransaksi.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center;">Belum ada data pelanggan.</td></tr>`;
+                return;
+            }
+
+            daftarTransaksi.forEach((t) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${t.tanggal}</td>
+                        <td>${t.nama}</td>
+                        <td>${t.nowa}</td>
+                        <td>${t.warna}</td>
+                        <td>${t.layanan}</td>
+                        <td>Rp ${parseFloat(t.total).toLocaleString('id-ID')}</td>
+                        <td>${t.status}</td>
+                        <td>
+                            <button class="btn-edit" onclick="bukaEdit(${t.rowIndex})">Edit</button>
+                            <button class="btn-delete" onclick="hapusTransaksi(${t.rowIndex})">Hapus</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function tambahPromo(event) {
+            event.preventDefault();
+            const btn = document.getElementById('btn-simpan-promo');
+            btn.textContent = "Menyimpan...";
+            btn.disabled = true;
+
+            const data = {
+                type: "promo",
+                kode: document.getElementById('input-kode-promo').value.trim().toUpperCase(),
+                potongan: parseFloat(document.getElementById('input-potongan').value) || 0
+            };
+
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) })
+            .then(() => {
+                document.getElementById('form-promo').reset();
+                alert('Promo berhasil disimpan!');
+                btn.textContent = "Simpan Promo";
+                btn.disabled = false;
+                muatPromo();
+            });
+        }
+
+        function hapusPromo(kode) {
+            if(confirm(`Yakin hapus promo ${kode}?`)) {
+                fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: "hapus_promo", kode: kode }) })
+                .then(() => { alert('Promo dihapus!'); muatPromo(); });
             }
         }
 
-        // Muat data promo saat pertama kali halaman dibuka
-        muatPromo();
+        function hapusTransaksi(rowIndex) {
+            if(confirm('Yakin ingin menghapus data pelanggan ini?')) {
+                fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: "hapus_transaksi", rowIndex: rowIndex }) })
+                .then(() => { alert('Data berhasil dihapus!'); muatTransaksi(); });
+            }
+        }
+
+        function bukaEdit(rowIndex) {
+            const t = daftarTransaksi.find(item => item.rowIndex === rowIndex);
+            if(!t) return;
+
+            document.getElementById('edit-rowindex').value = t.rowIndex;
+            document.getElementById('edit-nama').value = t.nama;
+            document.getElementById('edit-nowa').value = t.nowa;
+            document.getElementById('edit-warna').value = t.warna;
+            document.getElementById('edit-layanan').value = t.layanan;
+            document.getElementById('edit-harga').value = t.harga;
+            document.getElementById('edit-oneday').value = t.oneday;
+            document.getElementById('edit-promo').value = t.promo;
+            document.getElementById('edit-total').value = t.total;
+            document.getElementById('edit-status').value = t.status;
+
+            document.getElementById('modal-edit').style.display = 'flex';
+        }
+
+        function tutupModal() {
+            document.getElementById('modal-edit').style.display = 'none';
+        }
+
+        function simpanEditTransaksi(event) {
+            event.preventDefault();
+            const data = {
+                type: "edit_transaksi",
+                rowIndex: parseInt(document.getElementById('edit-rowindex').value),
+                nama: document.getElementById('edit-nama').value,
+                nowa: document.getElementById('edit-nowa').value,
+                warna: document.getElementById('edit-warna').value,
+                layanan: document.getElementById('edit-layanan').value,
+                harga: parseFloat(document.getElementById('edit-harga').value),
+                oneday: document.getElementById('edit-oneday').value,
+                promo: document.getElementById('edit-promo').value,
+                total: parseFloat(document.getElementById('edit-total').value),
+                status: document.getElementById('edit-status').value
+            };
+
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) })
+            .then(() => {
+                alert('Data berhasil diperbarui!');
+                tutupModal();
+                muatTransaksi();
+            });
+        }
 
         function simpanTransaksi(event) {
             event.preventDefault();
-            const btnSimpan = document.getElementById('btn-simpan');
-            btnSimpan.textContent = "Menyimpan...";
-            btnSimpan.disabled = true;
+            const btn = document.getElementById('btn-simpan');
+            btn.textContent = "Menyimpan...";
+            btn.disabled = true;
 
-            const dataTransaksi = {
+            const data = {
                 type: "transaksi",
                 nama: document.getElementById('nama').value,
                 nowa: document.getElementById('nowa').value,
@@ -296,27 +401,18 @@
                 status: document.getElementById('status-bayar').value
             };
 
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dataTransaksi)
-            })
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) })
             .then(() => {
-                alert('Transaksi berhasil disimpan ke Database!');
+                alert('Transaksi berhasil disimpan!');
                 document.getElementById('form-transaksi').reset();
                 document.getElementById('harga-dasar').value = 0;
                 document.getElementById('total-tagihan').value = 0;
-                btnSimpan.textContent = "Simpan Transaksi";
-                btnSimpan.disabled = false;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Gagal menyimpan transaksi.');
-                btnSimpan.textContent = "Simpan Transaksi";
-                btnSimpan.disabled = false;
+                btn.textContent = "Simpan Transaksi";
+                btn.disabled = false;
             });
         }
+
+        muatPromo();
     </script>
 </body>
 </html>
